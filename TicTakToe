@@ -1,0 +1,140 @@
+import java.util.Arrays;
+import java.util.Random;
+import java.util.Scanner;
+
+public class TicTakToe {
+
+    private static char [][] map;
+    private static final int SIZE = 3;
+    private static final char EMPTY_DOT = '•';
+    private static final char X_DOT = 'X';
+    private static final char O_DOT = 'O';
+    private static Scanner sc;
+
+
+    public static void main(String[] args) {
+
+        initMap();
+        printMap();
+        while (true) {
+            humanTurn();
+            printMap();
+            System.out.println();
+            if (checkWin(X_DOT)) {
+                System.out.println("You win");
+                break;
+            }
+            if (checkDraw()) {
+                System.out.println("Draw");
+                break;
+            }
+            computerTurn();
+            printMap();
+            System.out.println();
+            if (checkWin(O_DOT)) {
+                System.out.println("You lose");
+                break;
+            }
+            if (checkDraw()) {
+                System.out.println("Draw");
+                break;
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ignored) {
+            }
+        }
+    }
+
+    private static boolean checkDraw() {
+        for (int i = 0; i < map.length; i++) {
+            for (int j = 0; j < map[i].length; j++) {
+                if (map[i][j] == EMPTY_DOT) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static boolean checkWin(char c) {
+        int horizontal=0;
+        int vertical=0;
+        int diagonalA=0;
+        int diagonalB=0;
+        for(int i=0;i<=SIZE - 1;i++){
+            for(int j=0;j<=SIZE - 1;j++){
+                if (map[i][j]==c) {
+                    horizontal++;
+                    if(horizontal==SIZE) return true;
+
+                }
+                if(map[j][i]==c){
+                   vertical++;
+                   if(vertical==SIZE) return true;
+                }
+            }
+           if(map[i][i]==c) {
+               diagonalA++;
+               if (diagonalA == SIZE) return true;
+           }else diagonalA=0;
+            if (map[i][SIZE - 1 - i] == c) {
+                diagonalB++;
+                if (diagonalB == SIZE) return true;
+            }else diagonalB=0;
+            }
+        return false;
+        }
+
+
+        private static void computerTurn() {
+        int xCoordinate;
+        int yCoordinate;
+        do {
+            Random random = new Random();
+            xCoordinate = random.nextInt(SIZE);
+            yCoordinate = random.nextInt(SIZE);
+        } while (!isValidCell(xCoordinate, yCoordinate));
+        map[yCoordinate][xCoordinate] = O_DOT;
+    }
+
+    private static void humanTurn() {
+        int xCoordinate = -1;
+        int yCoordinate = -1;
+        do {
+            System.out.println("Введите координаты в формате x y");
+            if (sc.hasNextInt()) {
+                xCoordinate = sc.nextInt() - 1;
+            }
+            if (sc.hasNextInt()) {
+                yCoordinate = sc.nextInt() - 1;
+            }
+            sc.nextLine();
+        } while (!isValidCell(xCoordinate, yCoordinate));
+        map[yCoordinate][xCoordinate] = X_DOT;
+    }
+
+    private static boolean isValidCell(int x, int y) {
+        if (x < 0 || y < 0 || x > map.length - 1 || y > map.length - 1) {
+            return false;
+        }
+        return map[y][x] == EMPTY_DOT;
+    }
+
+    private static void printMap() {
+        for (int i = 0; i < map.length; i ++) {
+            for (int j = 0; j < map[i].length; j ++) {
+                System.out.print(map[i][j] + " ");
+            }
+            System.out.println();
+        }
+    }
+
+    private static void initMap() {
+        sc = new Scanner(System.in);
+        map = new char[SIZE][SIZE];
+        for (int i = 0; i < map.length; i++) {
+            Arrays.fill(map[i], EMPTY_DOT);
+        }
+    }
+}
