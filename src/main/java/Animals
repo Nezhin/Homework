@@ -1,0 +1,52 @@
+public class Main {
+    public static void main(String[] args) {
+        Animal animal=new Animal();
+        Dog dog= new Dog();
+        Cat cat= new Cat();
+
+        dog.run(500);
+        dog.swim(10);
+        cat.run(200);
+        cat.swim();
+    }
+}
+
+
+public class Animal {
+    String name;
+    int lenght;
+
+    public  void run (int length) {
+            System.out.println("The amimal can run");
+        }
+
+       public void swim (int length) {
+            System.out.println("The animal can swim");
+        }
+}
+
+
+public class Dog extends Animal {
+    public String getName(){
+        return name="Bobik";
+}
+    public void run(int length){
+        System.out.println(getName()+ " can run"+ " "+ length);
+}
+    public void swim(int length){
+        System.out.println(getName()+ " can swim"+" "+ length);
+    }
+}
+
+
+public class Cat extends Animal {
+    public String getName() {
+        return name = "Murzik";
+    }
+     public void run(int length){
+    System.out.println(getName()+" can run" +" "+ length);
+   }
+   public void swim(){
+        System.out.println(getName() + " can not swim");
+    }
+}
