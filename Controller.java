@@ -65,7 +65,7 @@ public class Controller implements Initializable {
 	DataOutputStream out;
 
 	static final String ADDRESS = "localhost";
-	static final int PORT = 6001;
+	static final int PORT = 7000;
 
 	private boolean isAuthorized;
 

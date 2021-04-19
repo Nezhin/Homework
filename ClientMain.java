@@ -8,7 +8,7 @@ public class ClientMain {
 		Socket socket = null;
 
 		try {
-			socket = new Socket("localhost", 6000);
+			socket = new Socket("localhost", 6005);
 
 			Scanner in = new Scanner(socket.getInputStream());
 			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);

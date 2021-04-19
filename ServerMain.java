@@ -10,7 +10,7 @@ public class ServerMain {
 		ServerSocket server = null;
 
 		try {
-			server = new ServerSocket(6000);
+			server = new ServerSocket(0);
 			socket = server.accept();
 
 			Scanner in = new Scanner(socket.getInputStream());

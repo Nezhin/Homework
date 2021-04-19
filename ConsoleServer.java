@@ -19,7 +19,7 @@ public class ConsoleServer {
 
 		try {
 			AuthService.connect();
-			server = new ServerSocket(6001);
+			server = new ServerSocket(0);
 			System.out.println("Server started");
 
 			while (true) {
@@ -27,6 +27,7 @@ public class ConsoleServer {
 				System.out.printf("Client [%s] try to connect\n", socket.getInetAddress());
 				new ClientHandler(this, socket);
 			}
+
 
 		} catch (IOException e) {
 			e.printStackTrace();
