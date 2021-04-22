@@ -19,7 +19,7 @@ public class ConsoleServer {
 
 		try {
 			AuthService.connect();
-			server = new ServerSocket(6001);
+			server = new ServerSocket(0);
 			System.out.println("Server started");
 
 			while (true) {
@@ -27,6 +27,7 @@ public class ConsoleServer {
 				System.out.printf("Client [%s] try to connect\n", socket.getInetAddress());
 				new ClientHandler(this, socket);
 			}
+
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -78,7 +79,7 @@ public class ConsoleServer {
 	public void sendPrivateMsg(ClientHandler nickFrom, String nickTo, String msg) {
 		for (ClientHandler c : users) {
 			if (c.getNickname().equals(nickTo)) {
-				if (!nickFrom.getNickname().equals(nickTo)) {
+				if (!c.checkBlackList(nickFrom.getNickname())) {
 					c.sendMsg(nickFrom.getNickname() + ": [Send for " + nickTo + "] " + msg);
 					nickFrom.sendMsg(nickFrom.getNickname() + ": [Send for " + nickTo + "] " + msg);
 				}
