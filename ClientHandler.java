@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClientHandler {
-
     private ConsoleServer server;
     private Socket socket;
     private DataOutputStream out;
@@ -39,7 +38,6 @@ public class ClientHandler {
                                     setNickname(nick);
                                     socket.setSoTimeout(0);
                                     server.subscribe(ClientHandler.this);
-                                    readHistory(100);
                                     break;
                                 } else {
                                     sendMsg("Учетная запись уже используется");
@@ -89,7 +87,7 @@ public class ClientHandler {
                                 }
                             } else {
                                 server.broadcastMessage(this, nickname + ": " + str);
-                                writeHistory(msg);
+
                             }
                             System.out.println("Client (" + socket.getInetAddress() + "): " + str);
                         }
@@ -127,9 +125,42 @@ public class ClientHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
+
+   // НЕ ПОЛУЧАЕТСЯ СОЕДИНИТЬ ЧТОБЫ ПРИ ОТПРАВКЕ СООБЩЕНИЯ В ЧАТ ОНО ПОПАДАЛО И В ФАЙЛ. А ТАК ЖЕ КАК СОЕДИНИТЬ
+    // ЧТОБЫ В ОКНЕ ЧАТА СРАЗУ ВСПЛЫВАЛИ ПОСЛЕДНИЕ СООБЩЕНИЯ?
+    public static void saveHistory(String msg) {
+        File file = new File("src\\server\\History");
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, true))) {
+                bw.write(msg);
+                bw.newLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void readLastLines(int lastLines) {
+
+        File file = new File("History");
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            List<String> lines = new ArrayList<>();
+            String line;
+
+            while ((line = br.readLine()) != null && lines.size()< 100) {
+                lines.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public String getNickname() {
         return nickname;
@@ -142,44 +173,10 @@ public class ClientHandler {
     public boolean checkBlackList(String nickname) {
         return blackList.contains(nickname);
     }
-    public void readHistory(int n){                                                // <-- чтение файла истории сообщений
-        File file =new File("test.txt");
-        try{
-            RandomAccessFile raf=new RandomAccessFile(file,"r");
-            long length = file.length()-1;
-            int readLine=0;
-            StringBuilder sb =new StringBuilder();
-            for(long i=length;i >=0; i--){
-                raf.seek(i);
-                char c=(char) raf.read();
-                if(c == '\n'){
-                    readLine++;
-                    if(readLine == n){
-                        break;
-                    }
-                }
-                sb.append(c);
-            }
-            sendMessage(String.valueOf(sb.reverse()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void sendMessage(String valueOf) {
-    }
-
-    public void writeHistory (String msg){                                       // <-- запись всех строк в файл истории
-        try(FileWriter writer = new FileWriter("test.txt", true))
-        {
-            String nick;
-            String text =(nick + ": " + msg + "\n");
-            writer.write(text);
-            writer.flush();
-        }
-        catch(IOException e){
-            e.printStackTrace();
-        }
-    }
 }
+
+
+
+
+
 
