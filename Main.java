@@ -1,32 +1,35 @@
-package sample;
+package Homework5;
 
-import javafx.application.Application;
-import javafx.event.EventHandler;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 
-public class Main extends Application {
+public class Main {
 
-    @Override
-    public void start(Stage primaryStage) throws Exception{
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("sample.fxml"));
-        Parent root = loader.load();
-        primaryStage.setTitle("Chat 2021");
-        primaryStage.setScene(new Scene(root, 600, 450));
-        primaryStage.show();
-        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-            public void handle(WindowEvent we) {
-                Controller controller = loader.getController();
-                controller.disconnect();
-            }
-        });
-    }
-
+    public static final int CARS_COUNT = 4;
+    public static final int HALF_CARS_COUNT = CARS_COUNT/2;
 
     public static void main(String[] args) {
-        launch(args);
+        System.out.println("ВАЖНОЕ ОБЪЯВЛЕНИЕ >>> Подготовка!!!");
+        CyclicBarrier cb = new CyclicBarrier(5);
+        CountDownLatch cdl = new CountDownLatch(CARS_COUNT);
+        Race race = new Race(new Road(60), new Tunnel(), new Road(40));
+        Car[] cars = new Car[CARS_COUNT];
+        for (int i = 0; i < cars.length; i++) {
+            cars[i] = new Car(race, 20 + (int) (Math.random() * 10),cb, cdl);
+        }
+        for (int i = 0; i < cars.length; i++) {
+            new Thread(cars[i]).start();
+        }
+        try {
+            cb.await();
+            System.out.println("ВАЖНОЕ ОБЪЯВЛЕНИЕ >>> Гонка началась!!!");
+            cb.await();
+            cb.await();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println("ВАЖНОЕ ОБЪЯВЛЕНИЕ >>> Гонка закончилась!!!");
     }
 }
+
+
