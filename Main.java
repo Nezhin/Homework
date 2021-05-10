@@ -1,32 +1,41 @@
-package sample;
+package Homework7;
 
-import javafx.application.Application;
-import javafx.event.EventHandler;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Comparator;
 
-public class Main extends Application {
 
-    @Override
-    public void start(Stage primaryStage) throws Exception{
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("sample.fxml"));
-        Parent root = loader.load();
-        primaryStage.setTitle("Chat 2021");
-        primaryStage.setScene(new Scene(root, 600, 450));
-        primaryStage.show();
-        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-            public void handle(WindowEvent we) {
-                Controller controller = loader.getController();
-                controller.disconnect();
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+        Class c = MyClass.class;
+        Object testObj = c.newInstance();
+        Method[] methods = c.getDeclaredMethods();
+        ArrayList<Method> al = new ArrayList<>();
+        Method beforeMethod = null;
+        Method afterMethod = null;
+        for (Method o : c.getDeclaredMethods()) {
+            if (o.isAnnotationPresent(Test.class)) {
+                al.add(o);
             }
-        });
-    }
+            if (o.isAnnotationPresent(BeforeSuite.class)) {
+                if (beforeMethod == null) beforeMethod = o;
+                else throw new RuntimeException("Больше одного метода с аннотацией BeforeSuite");
+            }
+            if (o.isAnnotationPresent(AfterSuite.class)) {
+                if (afterMethod == null) afterMethod = o;
+                else throw new RuntimeException("Больше одного метода с аннотацией AfterSuite");
+            }
+            al.sort(new Comparator<Method>() {
+                @Override
+                public int compare(Method o1, Method o2) {
+                    return o2.getAnnotation(Test.class).priority()-o1.getAnnotation(Test.class).priority();
+                }
+            });
 
-
-    public static void main(String[] args) {
-        launch(args);
+        }
+        if (beforeMethod != null) beforeMethod.invoke(testObj, null);
+        for (Method o : al) o.invoke(testObj, null);
+        if (afterMethod != null) afterMethod.invoke(testObj, null);
     }
 }
