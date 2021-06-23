@@ -1,140 +1,94 @@
-package server;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
-public class ClientHandler {
+public class ClientHandler implements Runnable {
+    private final Socket socket;
 
-	private ConsoleServer server;
-	private Socket socket;
-	private DataOutputStream out;
-	private DataInputStream in;
-	private String nickname;
+    public ClientHandler(Socket socket) {
+        this.socket = socket;
+    }
 
-	// черный список у пользователя, а не у сервера
-	List<String> blackList;
 
-	public ClientHandler(ConsoleServer server, Socket socket) {
-		try {
-			this.server = server;
-			this.socket = socket;
-			this.in = new DataInputStream(socket.getInputStream());
-			this.out = new DataOutputStream(socket.getOutputStream());
-			this.blackList = new ArrayList<>();
+    @Override
+    public void run() {
+        try (
+                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                DataInputStream in = new DataInputStream(socket.getInputStream())
+        ) {
+            System.out.printf("Client %s connected\n", socket.getInetAddress());
+            while (true) {
+                String command = in.readUTF();
+                if ("upload".equals(command)) {
+                    uploading(out, in);
+                }
 
-			new Thread(() -> {
-				boolean isExit = false;
-				try {
-					while (true) {
-						String str = in.readUTF();
-						if (str.startsWith("/auth")){
-							String[] tokens = str.split(" ");
-							String nick = AuthService.getNicknameByLoginAndPass(tokens[1], tokens[2]);
-							if (nick != null) {
-								if (!server.isNickBusy(nick)) {
-									sendMsg("/auth-OK");
-									setNickname(nick);
-									server.subscribe(ClientHandler.this);
-									break;
-								} else {
-									sendMsg("Учетная запись уже используется");
-								}
-							} else {
-								sendMsg("Неверный логин/пароль");
-							}
-						}
-						// регистрация
-						if (str.startsWith("/signup ")) {
-							String[] tokens = str.split(" ");
-							int result = AuthService.addUser(tokens[1], tokens[2], tokens[3]);
-							if (result > 0) {
-								sendMsg("Successful registration");
-							} else {
-								sendMsg("Registration failed");
-							}
-						}
-						// выход
-						if ("/end".equals(str)) {
-							isExit = true;
-							break;
-						}
-					}
+                if ("download".equals(command)) {
+                    downloading(out, in);
+                }
+                if ("exit".equals(command)) {
+                    System.out.printf("Client %s disconnected correctly\n", socket.getInetAddress());
+                    break;
+                }
 
-					if (!isExit) {
-						while (true) {
-							String str = in.readUTF();
-							// для всех служебных команд и личных сообщений
-							if (str.startsWith("/") || str.startsWith("@")) {
-								if ("/end".equalsIgnoreCase(str)){
-									// для оповещения клиента, т.к. без сервера клиент работать не должен
-									out.writeUTF("/serverClosed");
-									System.out.println("Client (" + socket.getInetAddress() + ") exited");
-									break;
-								}
-								// вторая часть ДЗ. выполнение
-								if (str.startsWith("@")) {
-									String[] tokens = str.split(" ", 2);
-									server.sendPrivateMsg(this, tokens[0].substring(1), tokens[1]);
-								}
-								// черный список для пользователя. но пока что только в рамках одного запуска программы
-								if (str.startsWith("/blacklist ")) {
-									String[] tokens = str.split(" ");
-									blackList.add(tokens[1]);
-									sendMsg("You added " + tokens[1] + " to blacklist");
-								}
-							} else {
-								server.broadcastMessage(this, nickname +": " + str);
-							}
-							System.out.println("Client (" + socket.getInetAddress() + "): " + str);
-						}
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				} finally {
-					try {
-						in.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					try {
-						out.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					try {
-						socket.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					server.unsubscribe(this);
-				}
-			}).start();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+                System.out.println(command);
+//				out.writeUTF(command);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    // Цикл реализован таким образом, что за один метод работают поток ввода и вывода.
+    // Например отправка файла и получение статуса с сервера как я понял
 
-	public void sendMsg(String msg) {
-		try {
-			out.writeUTF(msg);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+    private void downloading(DataOutputStream out, DataInputStream in) throws IOException {
+        String filename = in.readUTF();
+        try {
+            File file = new File("src\\server" + File.separator + filename);
+            if (!file.exists()) {
+                throw  new FileNotFoundException();
+            }
 
-	public String getNickname() {
-		return nickname;
-	}
+            long fileLength = file.length();
 
-	public void setNickname(String nickname) {
-		this.nickname = nickname;
-	}
+            FileInputStream fis = new FileInputStream(file);
 
-	public boolean checkBlackList(String nickname) {
-		return blackList.contains(nickname);
-	}
+            out.writeLong(fileLength);
+
+            int read;
+            byte[] buffer = new byte[8 * 1024];
+            while ((read = fis.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+
+            out.flush();
+
+            String status = in.readUTF();
+            System.out.println("downloading status: " + status);
+        } catch (FileNotFoundException e) {
+            System.err.println("File not found - " + filename);
+        }
+    }
+
+    private void uploading(DataOutputStream out, DataInputStream in) throws IOException {
+        try {
+            File file = new File("src\\server"  + File.separator + in.readUTF());
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            FileOutputStream fos = new FileOutputStream(file);
+
+            long size = in.readLong();
+
+            byte[] buffer = new byte[8 * 1024];
+
+            for (int i = 0; i < (size + (buffer.length - 1)) / (buffer.length); i++) {
+                int read = in.read(buffer);
+                fos.write(buffer, 0, read);
+            }
+            fos.close();
+            out.writeUTF("OK");
+        } catch (Exception e) {
+            out.writeUTF("FATAL ERROR");
+        }
+    }
 }
