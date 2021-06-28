@@ -13,7 +13,7 @@ public class Client extends JFrame {
     private final DataInputStream in;
 
     public Client() throws IOException {
-        socket = new Socket("localhost", 5671);
+        socket = new Socket("localhost", 5678);
         out = new DataOutputStream(socket.getOutputStream());
         in = new DataInputStream(socket.getInputStream());
 
@@ -48,13 +48,50 @@ public class Client extends JFrame {
     private void mainActions(String[] cmd) {
         if ("upload".equals(cmd[0])) {
             sendFile(cmd[1]);
+        } else if ("download".equals(cmd[0])) {
+            getFile(cmd[1]);
         }
     }
 
+    private void getFile(String filename) {
+        try {
+            out.writeUTF("download");
+            out.writeUTF(filename);
+
+            File file = new File("client" + File.separator + filename);
+
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+
+            FileOutputStream fos = new FileOutputStream(file);
+            long size = in.readLong();
+            byte[] buffer = new byte[8 * 1024];
+
+            for (int i = 0; i < (size + (buffer.length - 1)) / buffer.length; i++) {
+                int read = in.read(buffer);
+                fos.write(buffer, 0, read);
+            }
+            // Цикл реализован таким образом чтобы считывать непустые файлы которых размер больше 0 байт
+
+            fos.close();
+
+            out.writeUTF("OK");
+        } catch (IOException e) {
+            try {
+                out.writeUTF("WRONG");
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+            System.err.println("Downloading error");
+            e.printStackTrace();
+        }
+
+    }
 
     private void sendFile(String filename) {
         try {
-            File file = new File("src\\client" + File.separator + filename);
+            File file = new File("client" + File.separator + filename);
             if (!file.exists()) {
                 throw  new FileNotFoundException();
             }
