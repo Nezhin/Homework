@@ -1,4 +1,4 @@
-package com.polozov.cloudstorage.lesson03.netty.handlers;
+package Homework3Source.handlers;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;

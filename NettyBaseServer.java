@@ -1,9 +1,9 @@
-package com.polozov.cloudstorage.lesson03.netty;
+package Homework3Source;
 
-import com.polozov.cloudstorage.lesson03.netty.handlers.ByteBufInputHandler;
-import com.polozov.cloudstorage.lesson03.netty.handlers.ChatMessageHandler;
-import com.polozov.cloudstorage.lesson03.netty.handlers.OutputHandler;
-import com.polozov.cloudstorage.lesson03.netty.handlers.StringInputHandler;
+import Homework3.handlers.ByteBufInputHandler;
+import Homework3.handlers.ChatMessageHandler;
+import Homework3.handlers.OutputHandler;
+import Homework3.handlers.StringInputHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
